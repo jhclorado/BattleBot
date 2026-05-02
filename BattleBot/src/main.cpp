@@ -11,7 +11,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // Quadruped with 8 servos (2 per limb)
 // Servo indices: FL_femur=0, FL_fibula=1, FR_femur=2, FR_fibula=3, 
 //                BL_femur=4, BL_fibula=5, BR_femur=6, BR_fibula=7
-Quadruped robot(8, 1, 2, 3, 4, 5, 6, 7);
+Quadruped robot(8, 9, 2, 3, 4, 5, 6, 7);
 Controller controller(&robot);
 
 // Manual control settings
@@ -21,15 +21,16 @@ const int MAX_ANGLE = 180;
 
 // Current joint angles for manual control
 struct JointAngles {
-  int fl_femur = 150;
-  int fl_fibula = 50;
-  int fr_femur = 35;
+  int fl_femur = 130;
+  int fl_fibula = 90;
+  int fr_femur = 45;
   int fr_fibula = 0;
-  int bl_femur = 90;
-  int bl_fibula = 35;
-  int br_femur = 0;
-  int br_fibula = 100;
+  int bl_femur = 35;
+  int bl_fibula = 0;
+  int br_femur =135;
+  int br_fibula = 180;
 } joints;
+
 
 void applyJointAngles() {
   robot.frontLeft.setTarget(joints.fl_femur, joints.fl_fibula);
@@ -37,6 +38,133 @@ void applyJointAngles() {
   robot.backLeft.setTarget(joints.bl_femur, joints.bl_fibula);
   robot.backRight.setTarget(joints.br_femur, joints.br_fibula);
 }
+
+void standUp() {
+  joints.fl_femur = 130; joints.fl_fibula = 90;
+  joints.fr_femur = 45;  joints.fr_fibula = 0;
+  joints.bl_femur = 35;  joints.bl_fibula = 0;
+  joints.br_femur =135;  joints.br_fibula = 180;
+  applyJointAngles();
+}
+
+
+void walk () {
+  
+  // step 1: lift hands
+  joints.fl_fibula = 45;
+  joints.br_fibula = 135;
+  applyJointAngles();
+  while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
+    robot.update();
+  }
+
+  // step 2 move femurs
+
+  joints.fl_femur = 180; 
+  joints.br_femur = 90; 
+
+  applyJointAngles();
+  while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) ||
+         (robot.backRight.femur.currentAngle != joints.br_femur) ) {
+    robot.update();
+  }
+  
+  // step 3: move other legs forward
+  joints.bl_femur = 0;
+  joints.bl_fibula = 45;
+  joints.fl_fibula = 90;
+  applyJointAngles();
+  while (robot.backLeft.femur.currentAngle != joints.bl_femur || robot.backLeft.fibula.currentAngle != joints.bl_fibula) {
+    robot.update();
+  }
+
+
+  joints.fl_fibula = 90;
+  joints.br_fibula = 180;
+  applyJointAngles();
+  while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
+    robot.update();
+  }
+
+  
+
+  standUp();
+
+
+  joints.fr_fibula = 45;
+  joints.bl_fibula = 45;
+  applyJointAngles();
+  while ((robot.frontRight.fibula.currentAngle != joints.fr_fibula) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
+    robot.update();
+  }
+
+  joints.fr_femur = 0; 
+  joints.bl_femur = 90; 
+
+  applyJointAngles();
+  while ((robot.frontRight.femur.currentAngle != joints.fr_femur) ||
+         (robot.backLeft.femur.currentAngle != joints.bl_femur) ) {
+    robot.update();
+  }
+
+  joints.br_femur = 180;
+  joints.br_fibula = 135;
+  joints.fr_fibula = 0;
+  applyJointAngles();
+  while (robot.backRight.femur.currentAngle != joints.br_femur || robot.backRight.fibula.currentAngle != joints.br_fibula) {
+    robot.update();
+  }
+
+  joints.fr_fibula = 0;
+  joints.bl_fibula = 0;
+  applyJointAngles();
+  while ((robot.frontRight.fibula.currentAngle != joints.fr_fibula) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
+    robot.update();
+  }
+
+  
+
+  standUp();
+  
+
+}
+
+
+// void walk() {
+//   joints.br_femur = 135; joints.br_fibula = 130;
+//   applyJointAngles();
+//   Serial.println("Moving Back Right leg...");
+//   while ((robot.backRight.femur.currentAngle != joints.br_femur) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
+//     robot.update();
+//   }
+
+//   joints.bl_femur = 100;  joints.bl_fibula = 0;
+//   applyJointAngles();
+//   while ((robot.backLeft.femur.currentAngle != joints.bl_femur) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
+//     robot.update();
+//   }
+
+//   joints.fr_femur = 45;  joints.fr_fibula = 10;
+//   applyJointAngles();
+//   while ((robot.frontRight.femur.currentAngle != joints.fr_femur) || (robot.frontRight.fibula.currentAngle != joints.fr_fibula)) {
+//     robot.update();
+//   }
+
+//   joints.fl_femur = 130; joints.fl_fibula = 40;
+//   applyJointAngles();
+//   while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) || (robot.frontLeft.fibula.currentAngle != joints.fl_fibula)) {
+//     robot.update();
+//   }
+
+
+//   joints.br_femur = 135; joints.br_fibula = 180;
+//   applyJointAngles();
+//   Serial.println("Moving Back Right leg...");
+//   while ((robot.backRight.femur.currentAngle != joints.br_femur) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
+//     robot.update();
+//   }
+
+// }
 
 void handleSerialInput(char key) {
   bool updated = false;
@@ -179,6 +307,17 @@ void handleSerialInput(char key) {
       Serial.println("Back Right:  t/7(+) g/&(−) femur | y/8(+) h/*(−) fibula");
       Serial.println("\n? = Help\n");
       break;
+
+    case 'p':
+    case 'P':
+      standUp();
+      Serial.println("Standing up...");
+      break;
+
+    case ']':
+      walk();
+      Serial.println("Walking...");
+      break;
   }
   
   if (updated) {
@@ -204,6 +343,7 @@ void setup() {
   Serial.println("Type '?' for control help");
 }
 
+
 void loop() {
   // Check for serial input
   if (Serial.available()) {
@@ -212,6 +352,7 @@ void loop() {
       handleSerialInput(key);
     }
   }
+  // walk();
   
   // Check for new ESP-NOW messages
   char msg[250];
@@ -222,3 +363,55 @@ void loop() {
   
   robot.update();
 }
+
+// #include <Wire.h>
+// #include <Adafruit_PWMServoDriver.h>
+
+// // Define custom I2C pins for the ESP32-CAM
+// #define I2C_SDA 21
+// #define I2C_SCL 22
+
+// // Initialize the PCA9685 object
+// Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+// // Servo parameters
+// #define SERVOMIN 150  // Minimum pulse length for 0 degrees
+// #define SERVOMAX 600  // Maximum pulse length for 180 degrees
+
+// void setup() {
+//   // Initialize Serial Monitor
+//   Serial.begin(115200);
+//   delay(2000); // Allow time for Serial Monitor to connect
+//   Serial.println("Starting...");
+
+//   // Initialize I2C with custom SDA and SCL pins
+//   if (Wire.begin(I2C_SDA, I2C_SCL)) {
+//     Serial.println("I2C initialized successfully.");
+//   } else {
+//     Serial.println("I2C initialization failed!");
+//     while (true); // Stop execution if I2C fails
+//   }
+
+//   // Initialize PCA9685
+//   pwm.begin();
+//   pwm.setPWMFreq(50); // Set frequency to 50 Hz for servos
+//   Serial.println("PCA9685 initialized.");
+// }
+
+// void loop() {
+//   Serial.println("Moving servo on channel 1...");
+
+//   // Sweep the servo on channel 1 from 0 to 180 degrees
+//   for (int pulse = SERVOMIN; pulse <= SERVOMAX; pulse++) {
+//     pwm.setPWM(1, 0, pulse); // Move servo on channel 1
+//     delay(10); // Delay for smooth motion
+//   }
+
+//   // Sweep the servo back from 180 to 0 degrees
+//   for (int pulse = SERVOMAX; pulse >= SERVOMIN; pulse--) {
+//     pwm.setPWM(1, 0, pulse);
+//     delay(10);
+//   }
+
+//   delay(1000); // Wait a bit before repeating
+// }
