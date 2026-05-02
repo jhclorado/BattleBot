@@ -47,6 +47,35 @@ void standUp() {
   applyJointAngles();
 }
 
+void jump () {
+  // step 1: squat
+  joints.fl_fibula = 0;
+  joints.bl_fibula = 90;
+  joints.br_fibula = 90;
+  joints.fr_fibula = 90;
+
+  applyJointAngles();
+  while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) ||
+         (robot.backLeft.fibula.currentAngle != joints.bl_fibula) ||
+         (robot.backRight.fibula.currentAngle != joints.br_fibula) ||
+         (robot.frontRight.fibula.currentAngle != joints.fr_fibula) ) {
+    robot.update();
+         }
+  
+  // step 1: stand up quickly
+  joints.fl_fibula = 90;
+  joints.bl_fibula = 0;
+  joints.br_fibula = 180;
+  joints.fr_fibula = 0;
+  applyJointAngles();
+  while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) ||
+         (robot.backLeft.fibula.currentAngle != joints.bl_fibula) ||
+         (robot.backRight.fibula.currentAngle != joints.br_fibula) ||
+         (robot.frontRight.fibula.currentAngle != joints.fr_fibula) ) {
+    robot.update();
+         }
+
+}
 
 void walk () {
   
@@ -317,6 +346,10 @@ void handleSerialInput(char key) {
     case ']':
       walk();
       Serial.println("Walking...");
+      break;
+    case '[':
+      jump();
+      Serial.println("Jumping...");
       break;
   }
   
