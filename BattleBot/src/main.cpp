@@ -31,11 +31,68 @@ struct JointAngles {
   int br_fibula = 100;
 } joints;
 
+bool autoWalk = false;
+unsigned long autoWalkLastStep = 0;
+const unsigned long AUTO_WALK_STEP_MS = 500;
+int autoWalkPhase = 0;
+
 void applyJointAngles() {
   robot.frontLeft.setTarget(joints.fl_femur, joints.fl_fibula);
   robot.frontRight.setTarget(joints.fr_femur, joints.fr_fibula);
   robot.backLeft.setTarget(joints.bl_femur, joints.bl_fibula);
   robot.backRight.setTarget(joints.br_femur, joints.br_fibula);
+}
+
+void startAutoWalk() {
+  delay(2000);
+  Serial.println("Starting uncontrolled test walk...");
+  autoWalk = true;
+  autoWalkLastStep = millis();
+  autoWalkPhase = 0;
+}
+
+void runAutoWalkStep() {
+  if (!autoWalk) {
+    return;
+  }
+
+  unsigned long now = millis();
+  if (now - autoWalkLastStep < AUTO_WALK_STEP_MS) {
+    return;
+  }
+  autoWalkLastStep = now;
+
+  switch (autoWalkPhase) {
+    case 0:
+      robot.frontLeft.setTarget(130, 40);
+      robot.backRight.setTarget(130, 40);
+      robot.frontRight.setTarget(50, 80);
+      robot.backLeft.setTarget(50, 80);
+      break;
+
+    case 1:
+      robot.frontLeft.setTarget(100, 60);
+      robot.backRight.setTarget(100, 60);
+      robot.frontRight.setTarget(80, 60);
+      robot.backLeft.setTarget(80, 60);
+      break;
+
+    case 2:
+      robot.frontLeft.setTarget(70, 80);
+      robot.backRight.setTarget(70, 80);
+      robot.frontRight.setTarget(110, 40);
+      robot.backLeft.setTarget(110, 40);
+      break;
+
+    case 3:
+      robot.frontLeft.setTarget(90, 60);
+      robot.backRight.setTarget(90, 60);
+      robot.frontRight.setTarget(90, 60);
+      robot.backLeft.setTarget(90, 60);
+      break;
+  }
+
+  autoWalkPhase = (autoWalkPhase + 1) % 4;
 }
 
 void handleSerialInput(char key) {
@@ -202,22 +259,28 @@ void setup() {
   
   Serial.println("\n=== BattleBot Ready ===");
   Serial.println("Type '?' for control help");
+
+  startAutoWalk();
 }
 
 void loop() {
-  // Check for serial input
-  if (Serial.available()) {
-    char key = Serial.read();
-    if (key >= 32) {  // Only process printable characters
-      handleSerialInput(key);
+  if (autoWalk) {
+    runAutoWalkStep();
+  } else {
+    // Check for serial input
+    if (Serial.available()) {
+      char key = Serial.read();
+      if (key >= 32) {  // Only process printable characters
+        handleSerialInput(key);
+      }
     }
-  }
-  
-  // Check for new ESP-NOW messages
-  char msg[250];
-  uint8_t sender[6];
-  if (get_latest_message(msg, sizeof(msg), sender)) {
-    controller.handlePacket((uint8_t*)msg, strlen(msg));
+    
+    // Check for new ESP-NOW messages
+    char msg[250];
+    uint8_t sender[6];
+    if (get_latest_message(msg, sizeof(msg), sender)) {
+      controller.handlePacket((uint8_t*)msg, strlen(msg));
+    }
   }
   
   robot.update();
