@@ -1,0 +1,33 @@
+# BattleBot Controller Example Commands
+
+# Basic Positions
+stand
+sit
+
+# Direct Angle Control (femur, fibula for each leg)
+# Format: FL:femur,fibula;FR:femur,fibula;BL:femur,fibula;BR:femur,fibula
+
+# Neutral standing position
+FL:90,45;FR:90,45;BL:90,45;BR:90,45
+
+# Sitting position
+FL:45,90;FR:45,90;BL:135,90;BR:135,90
+
+# High step position
+FL:135,0;FR:90,45;BL:90,45;BR:90,45
+
+# Walking sequence
+walk
+
+# Stop any sequence
+stop
+
+# Custom poses
+# Wave front left leg
+FL:135,45;FR:90,45;BL:90,45;BR:90,45
+
+# Bow position
+FL:45,135;FR:45,135;BL:90,45;BR:90,45
+
+# Stretch position
+FL:135,0;FR:45,90;BL:135,0;BR:45,90

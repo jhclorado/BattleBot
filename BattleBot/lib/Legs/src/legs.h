@@ -32,8 +32,11 @@ public:
   }
 
   void update() {
+    
+    /* 
+    
+    FOR SMOOTH MOVEMENT
     unsigned long now = millis();
-
     if (now - lastUpdate >= stepDelay) {
       lastUpdate = now;
 
@@ -46,6 +49,18 @@ public:
         pwm.setPWM(servoIndex, 0, angleToPulse(currentAngle));
       }
     }
+    */
+
+    if (currentAngle < targetAngle) {
+        currentAngle++;
+        pwm.setPWM(servoIndex, 0, angleToPulse(currentAngle));
+    } 
+    
+    else if (currentAngle > targetAngle) {
+      currentAngle--;
+      pwm.setPWM(servoIndex, 0, angleToPulse(currentAngle));
+    }
+    
   }
 };
 

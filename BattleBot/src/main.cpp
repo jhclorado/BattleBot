@@ -77,6 +77,19 @@ void jump () {
 
 }
 
+bool isInterrupted() {
+  if (Serial.available()) {
+      char key = Serial.read();
+      if (key >= 32) {  // Only process printable characters
+        if (key != 'w' && key != 'W') {  // Don't interrupt walk command
+          standUp();
+          return true;
+        }
+      }
+    }
+  return false;
+}
+
 void walk () {
   
   // step 1: lift hands
@@ -85,6 +98,7 @@ void walk () {
   applyJointAngles();
   while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
   // step 2 move femurs
@@ -96,6 +110,7 @@ void walk () {
   while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) ||
          (robot.backRight.femur.currentAngle != joints.br_femur) ) {
     robot.update();
+    if (isInterrupted()) return;
   }
   
   // step 3: move other legs forward
@@ -105,6 +120,7 @@ void walk () {
   applyJointAngles();
   while (robot.backLeft.femur.currentAngle != joints.bl_femur || robot.backLeft.fibula.currentAngle != joints.bl_fibula) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
 
@@ -113,6 +129,7 @@ void walk () {
   applyJointAngles();
   while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
   
@@ -125,6 +142,7 @@ void walk () {
   applyJointAngles();
   while ((robot.frontRight.fibula.currentAngle != joints.fr_fibula) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
   joints.fr_femur = 0; 
@@ -134,6 +152,7 @@ void walk () {
   while ((robot.frontRight.femur.currentAngle != joints.fr_femur) ||
          (robot.backLeft.femur.currentAngle != joints.bl_femur) ) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
   joints.br_femur = 180;
@@ -142,6 +161,7 @@ void walk () {
   applyJointAngles();
   while (robot.backRight.femur.currentAngle != joints.br_femur || robot.backRight.fibula.currentAngle != joints.br_fibula) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
   joints.fr_fibula = 0;
@@ -149,6 +169,7 @@ void walk () {
   applyJointAngles();
   while ((robot.frontRight.fibula.currentAngle != joints.fr_fibula) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
     robot.update();
+    if (isInterrupted()) return;
   }
 
   
@@ -200,15 +221,11 @@ void handleSerialInput(char key) {
   
   switch(key) {
     // Front Left Femur
-    case 'q':
-    case 'Q':
     case '1':  // Front Left Femur +
       joints.fl_femur = min(joints.fl_femur + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("FL Femur: %d\n", joints.fl_femur);
       break;
-    case 'a':
-    case 'A':
     case '!':  // Front Left Femur -
       joints.fl_femur = max(joints.fl_femur - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -216,15 +233,12 @@ void handleSerialInput(char key) {
       break;
     
     // Front Left Fibula
-    case 'w':
-    case 'W':
     case '2':  // Front Left Fibula +
       joints.fl_fibula = min(joints.fl_fibula + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("FL Fibula: %d\n", joints.fl_fibula);
       break;
-    case 's':
-    case 'S':
+
     case '@':  // Front Left Fibula -
       joints.fl_fibula = max(joints.fl_fibula - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -232,15 +246,12 @@ void handleSerialInput(char key) {
       break;
     
     // Front Right Femur
-    case 'e':
-    case 'E':
     case '3':  // Front Right Femur +
       joints.fr_femur = min(joints.fr_femur + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("FR Femur: %d\n", joints.fr_femur);
       break;
-    case 'd':
-    case 'D':
+
     case '#':  // Front Right Femur -
       joints.fr_femur = max(joints.fr_femur - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -248,15 +259,12 @@ void handleSerialInput(char key) {
       break;
     
     // Front Right Fibula
-    case 'r':
-    case 'R':
     case '4':  // Front Right Fibula +
       joints.fr_fibula = min(joints.fr_fibula + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("FR Fibula: %d\n", joints.fr_fibula);
       break;
-    case 'f':
-    case 'F':
+  
     case '$':  // Front Right Fibula -
       joints.fr_fibula = max(joints.fr_fibula - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -264,15 +272,12 @@ void handleSerialInput(char key) {
       break;
     
     // Back Left Femur
-    case 'z':
-    case 'Z':
     case '5':  // Back Left Femur +
       joints.bl_femur = min(joints.bl_femur + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("BL Femur: %d\n", joints.bl_femur);
       break;
-    case 'x':
-    case 'X':
+
     case '%':  // Back Left Femur -
       joints.bl_femur = max(joints.bl_femur - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -280,15 +285,12 @@ void handleSerialInput(char key) {
       break;
     
     // Back Left Fibula
-    case 'c':
-    case 'C':
     case '6':  // Back Left Fibula +
       joints.bl_fibula = min(joints.bl_fibula + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("BL Fibula: %d\n", joints.bl_fibula);
       break;
-    case 'v':
-    case 'V':
+      
     case '^':  // Back Left Fibula -
       joints.bl_fibula = max(joints.bl_fibula - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -296,15 +298,12 @@ void handleSerialInput(char key) {
       break;
     
     // Back Right Femur
-    case 't':
-    case 'T':
     case '7':  // Back Right Femur +
       joints.br_femur = min(joints.br_femur + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("BR Femur: %d\n", joints.br_femur);
       break;
-    case 'g':
-    case 'G':
+      
     case '&':  // Back Right Femur -
       joints.br_femur = max(joints.br_femur - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -312,15 +311,12 @@ void handleSerialInput(char key) {
       break;
     
     // Back Right Fibula
-    case 'y':
-    case 'Y':
     case '8':  // Back Right Fibula +
       joints.br_fibula = min(joints.br_fibula + JOINT_STEP, MAX_ANGLE);
       updated = true;
       Serial.printf("BR Fibula: %d\n", joints.br_fibula);
       break;
-    case 'h':
-    case 'H':
+      
     case '*':  // Back Right Fibula -
       joints.br_fibula = max(joints.br_fibula - JOINT_STEP, MIN_ANGLE);
       updated = true;
@@ -337,17 +333,18 @@ void handleSerialInput(char key) {
       Serial.println("\n? = Help\n");
       break;
 
-    case 'p':
-    case 'P':
+    case 'q':
+    case 'Q':
       standUp();
       Serial.println("Standing up...");
       break;
 
-    case ']':
+    case 'w':
+    case 'W':
       walk();
       Serial.println("Walking...");
       break;
-    case '[':
+    case ' ':
       jump();
       Serial.println("Jumping...");
       break;
