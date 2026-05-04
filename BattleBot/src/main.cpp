@@ -20,15 +20,27 @@ const int MIN_ANGLE = 0;
 const int MAX_ANGLE = 180;
 
 // Current joint angles for manual control
+
+
+// 
+
+// initial values for standing position
+const int STAND_FL_FIBULA = 90; const int STAND_FL_FEMUR = 135;
+const int STAND_FR_FEMUR = 45; const int STAND_FR_FIBULA = 0;
+const int STAND_BL_FEMUR = 45; const int STAND_BL_FIBULA = 0;
+const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 180;
+
+/** 
+ * front left femur: 0 degrees is fully forward and 180 degrees is full leftward
+ * front left fibula: 
+ * 
+ */
+
 struct JointAngles {
-  int fl_femur = 130;
-  int fl_fibula = 90;
-  int fr_femur = 45;
-  int fr_fibula = 0;
-  int bl_femur = 35;
-  int bl_fibula = 0;
-  int br_femur =135;
-  int br_fibula = 180;
+  int fl_femur = 135; int fl_fibula = 90;
+  int bl_femur = 45; int bl_fibula = 0;
+  int fr_femur = 45; int fr_fibula = 0;
+  int br_femur = 135; int br_fibula = 180;
 } joints;
 
 
@@ -42,8 +54,8 @@ void applyJointAngles() {
 void standUp() {
   joints.fl_femur = 130; joints.fl_fibula = 90;
   joints.fr_femur = 45;  joints.fr_fibula = 0;
-  joints.bl_femur = 35;  joints.bl_fibula = 0;
-  joints.br_femur =135;  joints.br_fibula = 180;
+  joints.bl_femur = 45;  joints.bl_fibula = 0;
+  joints.br_femur = 135;  joints.br_fibula = 180;
   applyJointAngles();
 }
 
