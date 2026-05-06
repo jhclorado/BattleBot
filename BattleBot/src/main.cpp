@@ -5,13 +5,16 @@
 #include "comm.h"
 #include "espnow.h"
 
+
+// ESP32 Mac Adress 30:76:f5:92:30:a8
+
 // Initialize PCA9685 PWM controller
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 // Quadruped with 8 servos (2 per limb)
 // Servo indices: FL_femur=0, FL_fibula=1, FR_femur=2, FR_fibula=3, 
 //                BL_femur=4, BL_fibula=5, BR_femur=6, BR_fibula=7
-Quadruped robot(8, 9, 2, 3, 4, 5, 6, 7);
+Quadruped robot(0, 1, 2, 3, 4, 5, 6, 7);
 Controller controller(&robot);
 
 // Manual control settings
@@ -25,7 +28,7 @@ const int MAX_ANGLE = 180;
 // 
 
 // initial values for standing position
-const int STAND_FL_FIBULA = 90; const int STAND_FL_FEMUR = 135;
+const int STAND_FL_FIBULA = 180; const int STAND_FL_FEMUR = 135;
 const int STAND_FR_FEMUR = 45; const int STAND_FR_FIBULA = 0;
 const int STAND_BL_FEMUR = 45; const int STAND_BL_FIBULA = 0;
 const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 180;
@@ -37,10 +40,10 @@ const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 180;
  */
 
 struct JointAngles {
-  int fl_femur = 135; int fl_fibula = 90;
-  int bl_femur = 45; int bl_fibula = 0;
-  int fr_femur = 45; int fr_fibula = 0;
-  int br_femur = 135; int br_fibula = 180;
+  int fl_femur = STAND_FL_FEMUR; int fl_fibula = STAND_FL_FIBULA;
+  int bl_femur = STAND_BL_FEMUR; int bl_fibula = STAND_BL_FIBULA;
+  int fr_femur = STAND_FR_FEMUR; int fr_fibula = STAND_FR_FIBULA;
+  int br_femur = STAND_BR_FEMUR; int br_fibula = STAND_BR_FIBULA;
 } joints;
 
 
@@ -52,16 +55,16 @@ void applyJointAngles() {
 }
 
 void standUp() {
-  joints.fl_femur = 130; joints.fl_fibula = 90;
-  joints.fr_femur = 45;  joints.fr_fibula = 0;
-  joints.bl_femur = 45;  joints.bl_fibula = 0;
-  joints.br_femur = 135;  joints.br_fibula = 180;
+  joints.fl_femur = STAND_FL_FEMUR; joints.fl_fibula = STAND_FL_FIBULA;
+  joints.fr_femur = STAND_FR_FEMUR;  joints.fr_fibula = STAND_FR_FIBULA;
+  joints.bl_femur = STAND_BL_FEMUR;  joints.bl_fibula = STAND_BL_FIBULA;
+  joints.br_femur = STAND_BR_FEMUR;  joints.br_fibula = STAND_BR_FIBULA;
   applyJointAngles();
 }
 
 void jump () {
   // step 1: squat
-  joints.fl_fibula = 0;
+  joints.fl_fibula = 90;
   joints.bl_fibula = 90;
   joints.br_fibula = 90;
   joints.fr_fibula = 90;
@@ -75,7 +78,7 @@ void jump () {
          }
   
   // step 1: stand up quickly
-  joints.fl_fibula = 90;
+  joints.fl_fibula = 180;
   joints.bl_fibula = 0;
   joints.br_fibula = 180;
   joints.fr_fibula = 0;
