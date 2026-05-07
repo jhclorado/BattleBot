@@ -21,7 +21,7 @@ public:
   int currentAngle = 0;
   int targetAngle = 0;
   unsigned long lastUpdate = 0;
-  int stepDelay = 1;
+  int stepDelay = 50;
 
   Joint(int index) {
     servoIndex = index;

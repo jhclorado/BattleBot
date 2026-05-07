@@ -28,10 +28,13 @@ const int MAX_ANGLE = 180;
 // 
 
 // initial values for standing position
-const int STAND_FL_FIBULA = 180; const int STAND_FL_FEMUR = 135;
-const int STAND_FR_FEMUR = 45; const int STAND_FR_FIBULA = 0;
-const int STAND_BL_FEMUR = 45; const int STAND_BL_FIBULA = 0;
-const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 180;
+const int STAND_FL_FIBULA = 165; const int STAND_FL_FEMUR = 135;
+const int STAND_FR_FEMUR = 45; const int STAND_FR_FIBULA = 15;
+const int STAND_BL_FEMUR = 45; const int STAND_BL_FIBULA = 15;
+const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 165;
+
+const int LIFT_FL_FIBULA = 90; const int LIFT_FR_FIBULA = 90;
+const int LIFT_BL_FIBULA = 90; const int LIFT_BR_FIBULA = 90;
 
 /** 
  * front left femur: 0 degrees is fully forward and 180 degrees is full leftward
@@ -54,6 +57,8 @@ void applyJointAngles() {
   robot.backRight.setTarget(joints.br_femur, joints.br_fibula);
 }
 
+
+
 void standUp() {
   joints.fl_femur = STAND_FL_FEMUR; joints.fl_fibula = STAND_FL_FIBULA;
   joints.fr_femur = STAND_FR_FEMUR;  joints.fr_fibula = STAND_FR_FIBULA;
@@ -61,6 +66,33 @@ void standUp() {
   joints.br_femur = STAND_BR_FEMUR;  joints.br_fibula = STAND_BR_FIBULA;
   applyJointAngles();
 }
+
+
+bool isInterrupted() {
+  if (Serial.available()) {
+      char key = Serial.read();
+      if (key >= 32) {  // Only process printable characters
+        if (key != 'w' && key != 'W') {  // Don't interrupt walk command
+          standUp();
+          return true;
+        }
+      }
+    }
+  return false;
+}
+
+void applyJointAnglesSmoothly() {
+  applyJointAngles();
+  while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) || (robot.frontLeft.fibula.currentAngle != joints.fl_fibula)
+      || (robot.frontRight.femur.currentAngle != joints.fr_femur) || (robot.frontRight.fibula.currentAngle != joints.fr_fibula)
+      || (robot.backLeft.femur.currentAngle != joints.bl_femur) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)
+      || (robot.backRight.femur.currentAngle != joints.br_femur) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
+    robot.update();
+    // delay(10);
+    if (isInterrupted()) return;
+  }
+}
+
 
 void jump () {
   // step 1: squat
@@ -88,108 +120,139 @@ void jump () {
          (robot.backRight.fibula.currentAngle != joints.br_fibula) ||
          (robot.frontRight.fibula.currentAngle != joints.fr_fibula) ) {
     robot.update();
+    
          }
 
 }
 
-bool isInterrupted() {
-  if (Serial.available()) {
-      char key = Serial.read();
-      if (key >= 32) {  // Only process printable characters
-        if (key != 'w' && key != 'W') {  // Don't interrupt walk command
-          standUp();
-          return true;
-        }
-      }
-    }
-  return false;
-}
+
 
 void walk () {
   
-  // step 1: lift hands
-  joints.fl_fibula = 45;
-  joints.br_fibula = 135;
-  applyJointAngles();
-  while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
+  // step 1: lift front left and back right legs by bending fibulas
+  joints.fl_fibula = LIFT_FL_FIBULA;
+  joints.br_fibula = LIFT_BR_FIBULA;
+  // Serial.println("Lifting front left and back right legs...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
 
-  // step 2 move femurs
+  // step 2: ready to push by moving femurs
 
   joints.fl_femur = 180; 
   joints.br_femur = 90; 
+  // Serial.println("Moving femurs to push forward...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
 
-  applyJointAngles();
-  while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) ||
-         (robot.backRight.femur.currentAngle != joints.br_femur) ) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
   
-  // step 3: move other legs forward
+  // step 3: lift other
+  joints.bl_fibula = 45;
+  joints.fl_fibula = STAND_FL_FIBULA;
   joints.bl_femur = 0;
-  joints.bl_fibula = 45;
-  joints.fl_fibula = 90;
-  applyJointAngles();
-  while (robot.backLeft.femur.currentAngle != joints.bl_femur || robot.backLeft.fibula.currentAngle != joints.bl_fibula) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
+  // Serial.println("Lifting back left and pushing front left...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
 
-
-  joints.fl_fibula = 90;
   joints.br_fibula = 180;
-  applyJointAngles();
-  while ((robot.frontLeft.fibula.currentAngle != joints.fl_fibula) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
+  // Serial.println("Moving back right leg...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
+
 
   
-
+  // Serial.println("STANDUP");
   standUp();
+  applyJointAnglesSmoothly();
+
+  // delay(2000);
 
 
-  joints.fr_fibula = 45;
-  joints.bl_fibula = 45;
-  applyJointAngles();
-  while ((robot.frontRight.fibula.currentAngle != joints.fr_fibula) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
+
+  joints.fr_fibula = LIFT_FR_FIBULA;
+  joints.bl_fibula = LIFT_BL_FIBULA;
+  // Serial.println("Lifting front right and back left legs...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
+
 
   joints.fr_femur = 0; 
   joints.bl_femur = 90; 
+  // Serial.println("Moving femurs to push forward...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
 
-  applyJointAngles();
-  while ((robot.frontRight.femur.currentAngle != joints.fr_femur) ||
-         (robot.backLeft.femur.currentAngle != joints.bl_femur) ) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
 
-  joints.br_femur = 180;
-  joints.br_fibula = 135;
+  joints.br_femur = 160;
+  joints.br_fibula = LIFT_BR_FIBULA;
   joints.fr_fibula = 0;
-  applyJointAngles();
-  while (robot.backRight.femur.currentAngle != joints.br_femur || robot.backRight.fibula.currentAngle != joints.br_fibula) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
+  // Serial.println("Pushing with front right and back right legs...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
+
 
   joints.fr_fibula = 0;
   joints.bl_fibula = 0;
-  applyJointAngles();
-  while ((robot.frontRight.fibula.currentAngle != joints.fr_fibula) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
-    robot.update();
-    if (isInterrupted()) return;
-  }
+  // Serial.println("Bringing lifted legs back to the ground...");
+  applyJointAnglesSmoothly();
+  // delay(2000);
+
+  // Serial.println("STANDUP");
+  standUp();
+  applyJointAnglesSmoothly();
 
   
 
+}
+
+void reverse () {
+  // step 1: lift back left and front right legs by bending fibulas
+  joints.fr_fibula = LIFT_FR_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.bl_fibula = LIFT_BL_FIBULA; 
+  
+  // step 2: move femurs
+  joints.bl_femur = 0; joints.fr_femur = 90;
+  applyJointAnglesSmoothly();
+  joints.fl_femur = 180; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.bl_fibula = STAND_BL_FIBULA; joints.fr_fibula = STAND_FR_FIBULA;
+  applyJointAnglesSmoothly();
   standUp();
+  applyJointAnglesSmoothly();
+
+
+  joints.fl_fibula = LIFT_FL_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.br_fibula = LIFT_BR_FIBULA; 
+  
+  // step 2: move femurs
+  joints.br_femur = 180; joints.fl_femur = 90;
+  applyJointAnglesSmoothly();
+  joints.fr_femur = 0; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.br_fibula = STAND_BR_FIBULA; joints.fl_fibula = STAND_FL_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+  // joints.fl_femur = 180; joints.fl_fibula = 135;
+  // step 4: lift other legs
+  // joints.br_fibula = LIFT_BR_FIBULA;
+  // applyJointAnglesSmoothly();
+  // // step 5: push legs back
+  // standUp();
+  // applyJointAnglesSmoothly();
+  // joints.fr_femur = 0;
+  // joints.bl_femur = 90;
+  // applyJointAnglesSmoothly();
+  // step 3: push front left
+  // joints.fl_fibula = 135;
+  // joints.bl_femur = STAND_BL_FEMUR;
+  // joints.fr_femur = STAND_FR_FEMUR;
+  // applyJointAngles();
+  // applyJointAnglesSmoothly();
+
   
 
 }
@@ -236,6 +299,11 @@ void handleSerialInput(char key) {
   
   switch(key) {
     // Front Left Femur
+    case 's':
+    case 'S':
+      reverse();
+      Serial.println("Reversing...");
+      break;
     case '1':  // Front Left Femur +
       joints.fl_femur = min(joints.fl_femur + JOINT_STEP, MAX_ANGLE);
       updated = true;
