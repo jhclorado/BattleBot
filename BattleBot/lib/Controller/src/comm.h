@@ -40,7 +40,6 @@ public:
     for (int i = 0; i < len; i++) msg += (char)data[i];
 
     Serial.println(msg);
-    parseAndApply(msg);
   }
 };
 

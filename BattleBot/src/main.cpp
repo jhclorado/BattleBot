@@ -33,14 +33,19 @@ const int STAND_FR_FEMUR = 45; const int STAND_FR_FIBULA = 15;
 const int STAND_BL_FEMUR = 45; const int STAND_BL_FIBULA = 15;
 const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 165;
 
-const int LIFT_FL_FIBULA = 90; const int LIFT_FR_FIBULA = 90;
-const int LIFT_BL_FIBULA = 90; const int LIFT_BR_FIBULA = 90;
+const int LIFT_FL_FIBULA = 115; const int LIFT_FR_FIBULA = 75;
+const int LIFT_BL_FIBULA = 75; const int LIFT_BR_FIBULA = 115;
 
 
 const int FL_X = 90; const int FL_Y = 180;
 const int FR_X = 90; const int FR_Y = 0;
 const int BL_X = 90; const int BL_Y = 0;
 const int BR_X = 90; const int BR_Y = 180;
+
+const int FL_XH = 90; const int FL_YH = 180;
+const int FR_XH = 90; const int FR_YH = 0;
+const int BL_XH = 90; const int BL_YH = 0;
+const int BR_XH = 90; const int BR_YH = 180;
 
 /** 
  * front left femur: 0 degrees is fully forward and 180 degrees is full leftward
@@ -86,19 +91,38 @@ bool isInterrupted() {
     }
   return false;
 }
+bool angleReached(float current, float target, float tolerance = 2.0) {
+    return abs(current - target) <= tolerance;
+}
+bool allJointsReached() {
+  return
+    angleReached(robot.frontLeft.femur.currentAngle, joints.fl_femur) &&
+    angleReached(robot.frontLeft.fibula.currentAngle, joints.fl_fibula) &&
+
+    angleReached(robot.frontRight.femur.currentAngle, joints.fr_femur) &&
+    angleReached(robot.frontRight.fibula.currentAngle, joints.fr_fibula) &&
+
+    angleReached(robot.backLeft.femur.currentAngle, joints.bl_femur) &&
+    angleReached(robot.backLeft.fibula.currentAngle, joints.bl_fibula) &&
+
+    angleReached(robot.backRight.femur.currentAngle, joints.br_femur) &&
+    angleReached(robot.backRight.fibula.currentAngle, joints.br_fibula);
+}
 
 void applyJointAnglesSmoothly() {
   applyJointAngles();
-  while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) || (robot.frontLeft.fibula.currentAngle != joints.fl_fibula)
-      || (robot.frontRight.femur.currentAngle != joints.fr_femur) || (robot.frontRight.fibula.currentAngle != joints.fr_fibula)
-      || (robot.backLeft.femur.currentAngle != joints.bl_femur) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)
-      || (robot.backRight.femur.currentAngle != joints.br_femur) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
-    robot.update();
-    // delay(10);
-    if (isInterrupted()) return;
-  }
-}
 
+  while (!allJointsReached()) {
+    robot.update();
+    delay(1);
+
+    if (isInterrupted())
+      return;
+  }
+
+  // allow physical servo to catch up
+  // delay(10); 
+}
 
 void jump () {
   // step 1: squat
@@ -226,8 +250,11 @@ void reverse () {
   joints.fl_femur = FL_Y; 
   applyJointAnglesSmoothly();
   // step 3: bring lifted legs back to the ground
-  joints.bl_fibula = STAND_BL_FIBULA; joints.fr_fibula = STAND_FR_FIBULA;
+  joints.bl_fibula = STAND_BL_FIBULA; 
   applyJointAnglesSmoothly();
+  joints.fr_fibula = STAND_FR_FIBULA;
+  applyJointAnglesSmoothly();
+
   standUp();
   applyJointAnglesSmoothly();
 
@@ -242,7 +269,9 @@ void reverse () {
   joints.fr_femur = FR_Y; 
   applyJointAnglesSmoothly();
   // step 3: bring lifted legs back to the ground
-  joints.br_fibula = STAND_BR_FIBULA; joints.fl_fibula = STAND_FL_FIBULA;
+  joints.br_fibula = STAND_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fl_fibula = STAND_FL_FIBULA;
   applyJointAnglesSmoothly();
   standUp();
   applyJointAnglesSmoothly();
@@ -260,7 +289,9 @@ void walk () {
   joints.bl_femur = BL_Y; 
   applyJointAnglesSmoothly();
   // step 3: bring lifted legs back to the ground
-  joints.fl_fibula = STAND_FL_FIBULA; joints.br_fibula = STAND_BR_FIBULA;
+  joints.fl_fibula = STAND_FL_FIBULA; 
+  applyJointAnglesSmoothly();
+  joints.br_fibula = STAND_BR_FIBULA;
   applyJointAnglesSmoothly();
   standUp();
   applyJointAnglesSmoothly();
@@ -276,7 +307,87 @@ void walk () {
   joints.br_femur = BR_Y; 
   applyJointAnglesSmoothly();
   // step 3: bring lifted legs back to the ground
-  joints.fr_fibula = STAND_FR_FIBULA; joints.bl_fibula = STAND_BL_FIBULA;
+  joints.fr_fibula = STAND_FR_FIBULA; 
+  applyJointAnglesSmoothly();
+  joints.bl_fibula = STAND_BL_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+}
+
+
+void turnLeft () {
+  joints.bl_fibula = LIFT_BL_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fr_fibula = LIFT_FR_FIBULA; 
+  
+  // step 2: move femurs
+  joints.fr_femur = STAND_FR_FEMUR; joints.bl_femur = BL_X;
+  applyJointAnglesSmoothly();
+  joints.br_femur = STAND_BR_FEMUR; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.fr_fibula = STAND_FR_FIBULA; 
+  applyJointAnglesSmoothly();
+  joints.bl_fibula = STAND_BL_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+  // step 1: lift back left and front right legs by bending fibulas
+  joints.br_fibula = LIFT_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fl_fibula = LIFT_FL_FIBULA; 
+  
+  // step 2: move femurs
+  joints.fl_femur = FL_Y; joints.br_femur = BR_X;
+  applyJointAnglesSmoothly();
+  joints.bl_femur = BL_Y; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.fl_fibula = STAND_FL_FIBULA; 
+  applyJointAnglesSmoothly();
+  joints.br_fibula = STAND_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+
+
+  
+}
+
+void turnRight () {
+  // step 1: lift back left and front right legs by bending fibulas
+  joints.br_fibula = LIFT_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fl_fibula = LIFT_FL_FIBULA; 
+  
+  // step 2: move femurs
+  joints.fl_femur = STAND_FL_FEMUR; joints.br_femur = BR_X;
+  applyJointAnglesSmoothly();
+  joints.bl_femur = STAND_BL_FEMUR; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.fl_fibula = STAND_FL_FIBULA; 
+  applyJointAnglesSmoothly();
+  joints.br_fibula = STAND_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+
+
+  joints.bl_fibula = LIFT_BL_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fr_fibula = LIFT_FR_FIBULA; 
+  
+  // step 2: move femurs
+  joints.fr_femur = FR_Y; joints.bl_femur = STAND_BL_FEMUR;
+  applyJointAnglesSmoothly();
+  joints.br_femur = BR_Y; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.fr_fibula = STAND_FR_FIBULA; 
+  applyJointAnglesSmoothly();
+  joints.bl_fibula = STAND_BL_FIBULA;
   applyJointAnglesSmoothly();
   standUp();
   applyJointAnglesSmoothly();
@@ -329,6 +440,16 @@ void handleSerialInput(char key) {
     case 'S':
       reverse();
       Serial.println("Reversing...");
+      break;
+    case 'a':
+    case 'A':
+      turnLeft();
+      Serial.println("turning left...");
+      break;
+    case 'd':
+    case 'D':
+      turnRight();
+      Serial.println("turning right...");
       break;
     case '1':  // Front Left Femur +
       joints.fl_femur = min(joints.fl_femur + JOINT_STEP, MAX_ANGLE);
@@ -450,8 +571,8 @@ void handleSerialInput(char key) {
 
     case 'w':
     case 'W':
-      // walk();
-      reverse_();
+      walk();
+      // reverse();
       Serial.println("Walking...");
       break;
     case ' ':
@@ -485,73 +606,30 @@ void setup() {
 
 
 void loop() {
-  // Check for serial input
+
+  // ================= SERIAL CONTROL =================
   if (Serial.available()) {
+
     char key = Serial.read();
-    if (key >= 32) {  // Only process printable characters
+
+    if (key >= 32) {   // printable characters only
       handleSerialInput(key);
     }
   }
-  // walk();
-  
-  // Check for new ESP-NOW messages
+
+  // ================= ESP-NOW CONTROL =================
   char msg[250];
   uint8_t sender[6];
+
   if (get_latest_message(msg, sizeof(msg), sender)) {
-    controller.handlePacket((uint8_t*)msg, strlen(msg));
+
+    Serial.print("ESP-NOW Received: ");
+    Serial.println(msg[0]);
+
+    // Execute received command
+    handleSerialInput(msg[0]);
   }
-  
+
+  // ================= ROBOT UPDATE =================
   robot.update();
 }
-
-// #include <Wire.h>
-// #include <Adafruit_PWMServoDriver.h>
-
-// // Define custom I2C pins for the ESP32-CAM
-// #define I2C_SDA 21
-// #define I2C_SCL 22
-
-// // Initialize the PCA9685 object
-// Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
-
-// // Servo parameters
-// #define SERVOMIN 150  // Minimum pulse length for 0 degrees
-// #define SERVOMAX 600  // Maximum pulse length for 180 degrees
-
-// void setup() {
-//   // Initialize Serial Monitor
-//   Serial.begin(115200);
-//   delay(2000); // Allow time for Serial Monitor to connect
-//   Serial.println("Starting...");
-
-//   // Initialize I2C with custom SDA and SCL pins
-//   if (Wire.begin(I2C_SDA, I2C_SCL)) {
-//     Serial.println("I2C initialized successfully.");
-//   } else {
-//     Serial.println("I2C initialization failed!");
-//     while (true); // Stop execution if I2C fails
-//   }
-
-//   // Initialize PCA9685
-//   pwm.begin();
-//   pwm.setPWMFreq(50); // Set frequency to 50 Hz for servos
-//   Serial.println("PCA9685 initialized.");
-// }
-
-// void loop() {
-//   Serial.println("Moving servo on channel 1...");
-
-//   // Sweep the servo on channel 1 from 0 to 180 degrees
-//   for (int pulse = SERVOMIN; pulse <= SERVOMAX; pulse++) {
-//     pwm.setPWM(1, 0, pulse); // Move servo on channel 1
-//     delay(10); // Delay for smooth motion
-//   }
-
-//   // Sweep the servo back from 180 to 0 degrees
-//   for (int pulse = SERVOMAX; pulse >= SERVOMIN; pulse--) {
-//     pwm.setPWM(1, 0, pulse);
-//     delay(10);
-//   }
-
-//   delay(1000); // Wait a bit before repeating
-// }
