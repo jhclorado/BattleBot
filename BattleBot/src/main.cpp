@@ -36,6 +36,12 @@ const int STAND_BR_FEMUR = 135; const int STAND_BR_FIBULA = 165;
 const int LIFT_FL_FIBULA = 90; const int LIFT_FR_FIBULA = 90;
 const int LIFT_BL_FIBULA = 90; const int LIFT_BR_FIBULA = 90;
 
+
+const int FL_X = 90; const int FL_Y = 180;
+const int FR_X = 90; const int FR_Y = 0;
+const int BL_X = 90; const int BL_Y = 0;
+const int BR_X = 90; const int BR_Y = 180;
+
 /** 
  * front left femur: 0 degrees is fully forward and 180 degrees is full leftward
  * front left fibula: 
@@ -127,7 +133,7 @@ void jump () {
 
 
 
-void walk () {
+void walk_ () {
   
   // step 1: lift front left and back right legs by bending fibulas
   joints.fl_fibula = LIFT_FL_FIBULA;
@@ -204,6 +210,10 @@ void walk () {
 
 }
 
+// const int FL_X = 90; const int FL_Y = 180;
+// const int FR_X = 90; const int FR_Y = 0;
+// const int BL_X = 90; const int BL_Y = 0;
+// const int BR_X = 90; const int BR_Y = 180;
 void reverse () {
   // step 1: lift back left and front right legs by bending fibulas
   joints.fr_fibula = LIFT_FR_FIBULA;
@@ -211,9 +221,9 @@ void reverse () {
   joints.bl_fibula = LIFT_BL_FIBULA; 
   
   // step 2: move femurs
-  joints.bl_femur = 0; joints.fr_femur = 90;
+  joints.bl_femur = BL_Y; joints.fr_femur = FR_X;
   applyJointAnglesSmoothly();
-  joints.fl_femur = 180; 
+  joints.fl_femur = FL_Y; 
   applyJointAnglesSmoothly();
   // step 3: bring lifted legs back to the ground
   joints.bl_fibula = STAND_BL_FIBULA; joints.fr_fibula = STAND_FR_FIBULA;
@@ -227,35 +237,51 @@ void reverse () {
   joints.br_fibula = LIFT_BR_FIBULA; 
   
   // step 2: move femurs
-  joints.br_femur = 180; joints.fl_femur = 90;
+  joints.br_femur = BR_Y; joints.fl_femur = FL_X;
   applyJointAnglesSmoothly();
-  joints.fr_femur = 0; 
+  joints.fr_femur = FR_Y; 
   applyJointAnglesSmoothly();
   // step 3: bring lifted legs back to the ground
   joints.br_fibula = STAND_BR_FIBULA; joints.fl_fibula = STAND_FL_FIBULA;
   applyJointAnglesSmoothly();
   standUp();
   applyJointAnglesSmoothly();
-  // joints.fl_femur = 180; joints.fl_fibula = 135;
-  // step 4: lift other legs
-  // joints.br_fibula = LIFT_BR_FIBULA;
-  // applyJointAnglesSmoothly();
-  // // step 5: push legs back
-  // standUp();
-  // applyJointAnglesSmoothly();
-  // joints.fr_femur = 0;
-  // joints.bl_femur = 90;
-  // applyJointAnglesSmoothly();
-  // step 3: push front left
-  // joints.fl_fibula = 135;
-  // joints.bl_femur = STAND_BL_FEMUR;
-  // joints.fr_femur = STAND_FR_FEMUR;
-  // applyJointAngles();
-  // applyJointAnglesSmoothly();
-
-  
-
 }
+
+void walk () {
+  // step 1: lift back left and front right legs by bending fibulas
+  joints.br_fibula = LIFT_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fl_fibula = LIFT_FL_FIBULA; 
+  
+  // step 2: move femurs
+  joints.fl_femur = FL_Y; joints.br_femur = BR_X;
+  applyJointAnglesSmoothly();
+  joints.bl_femur = BL_Y; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.fl_fibula = STAND_FL_FIBULA; joints.br_fibula = STAND_BR_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+
+
+  joints.bl_fibula = LIFT_BL_FIBULA;
+  applyJointAnglesSmoothly();
+  joints.fr_fibula = LIFT_FR_FIBULA; 
+  
+  // step 2: move femurs
+  joints.fr_femur = FR_Y; joints.bl_femur = BL_X;
+  applyJointAnglesSmoothly();
+  joints.br_femur = BR_Y; 
+  applyJointAnglesSmoothly();
+  // step 3: bring lifted legs back to the ground
+  joints.fr_fibula = STAND_FR_FIBULA; joints.bl_fibula = STAND_BL_FIBULA;
+  applyJointAnglesSmoothly();
+  standUp();
+  applyJointAnglesSmoothly();
+}
+
 
 
 // void walk() {
@@ -424,7 +450,8 @@ void handleSerialInput(char key) {
 
     case 'w':
     case 'W':
-      walk();
+      // walk();
+      reverse_();
       Serial.println("Walking...");
       break;
     case ' ':
