@@ -193,7 +193,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
 
-  Wire.begin();  // 🔥 REQUIRED FIX
+  Wire.begin();  
 
   WiFi.mode(WIFI_STA);
 
