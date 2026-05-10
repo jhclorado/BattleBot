@@ -24,7 +24,8 @@ const int MAX_ANGLE = 180;
 
 // Current joint angles for manual control
 
-
+bool isTurningLeft = false; bool isTurningRight = false;
+bool isWalking = false; bool isReverseWalking = false;
 // 
 
 // initial values for standing position
@@ -71,6 +72,8 @@ void applyJointAngles() {
 
 
 void standUp() {
+  isTurningLeft = false; isTurningRight = false;
+  isWalking = false; isReverseWalking = false;
   joints.fl_femur = STAND_FL_FEMUR; joints.fl_fibula = STAND_FL_FIBULA;
   joints.fr_femur = STAND_FR_FEMUR;  joints.fr_fibula = STAND_FR_FIBULA;
   joints.bl_femur = STAND_BL_FEMUR;  joints.bl_fibula = STAND_BL_FIBULA;
@@ -83,9 +86,23 @@ bool isInterrupted() {
   if (Serial.available()) {
       char key = Serial.read();
       if (key >= 32) {  // Only process printable characters
-        if (key != 'w' && key != 'W') {  // Don't interrupt walk command
-          standUp();
-          return true;
+        switch (key) {
+          case 'w': 
+          case 'W':
+            if (!isWalking) return true;
+          case 's':
+          case 'S':
+            if (!isReverseWalking) return true;
+          case 'a':
+          case 'A':
+            if (!isTurningLeft) return true;
+          case 'd':
+          case 'D':
+            if (!isTurningRight) return true;
+          case 'q':
+            if (isTurningLeft || isTurningRight || isWalking || isReverseWalking) {
+              return true;
+            }          
         }
       }
     }
@@ -114,7 +131,7 @@ void applyJointAnglesSmoothly() {
 
   while (!allJointsReached()) {
     robot.update();
-    delay(1);
+    // delay(1);
 
     if (isInterrupted())
       return;
@@ -315,8 +332,56 @@ void walk () {
   applyJointAnglesSmoothly();
 }
 
+void walks() {
+  isWalking = true;
+  // ================= FIRST DIAGONAL =================
+
+  // Lift
+  joints.br_fibula = LIFT_BR_FIBULA;
+  joints.fl_fibula = LIFT_FL_FIBULA;
+  applyJointAnglesSmoothly();
+
+  // Swing
+  joints.fl_femur = FL_Y;
+  joints.br_femur = BR_X;
+  applyJointAnglesSmoothly();
+
+  // Plant
+  joints.br_fibula = STAND_BR_FIBULA;
+  joints.fl_fibula = STAND_FL_FIBULA;
+  applyJointAnglesSmoothly();
+
+
+  // ================= SECOND DIAGONAL =================
+
+  // Return first pair while lifting second pair
+  joints.fl_femur = STAND_FL_FEMUR;
+  joints.br_femur = STAND_BR_FEMUR;
+
+  joints.bl_fibula = LIFT_BL_FIBULA;
+  joints.fr_fibula = LIFT_FR_FIBULA;
+  applyJointAnglesSmoothly();
+
+  // Swing second pair
+  joints.bl_femur = BL_X;
+  joints.fr_femur = FR_Y;
+  applyJointAnglesSmoothly();
+
+  // Plant second pair
+  joints.bl_fibula = STAND_BL_FIBULA;
+  joints.fr_fibula = STAND_FR_FIBULA;
+  applyJointAnglesSmoothly();
+
+  // Prepare for next cycle
+  joints.bl_femur = STAND_BL_FEMUR;
+  joints.fr_femur = STAND_FR_FEMUR;
+  applyJointAnglesSmoothly();
+
+}
+
 
 void turnLeft () {
+  isTurningLeft = true;
   joints.bl_fibula = LIFT_BL_FIBULA;
   applyJointAnglesSmoothly();
   joints.fr_fibula = LIFT_FR_FIBULA; 
@@ -356,6 +421,7 @@ void turnLeft () {
 }
 
 void turnRight () {
+  isTurningRight = true;
   // step 1: lift back left and front right legs by bending fibulas
   joints.br_fibula = LIFT_BR_FIBULA;
   applyJointAnglesSmoothly();
@@ -393,43 +459,52 @@ void turnRight () {
   applyJointAnglesSmoothly();
 }
 
+void reverseWalk() {
+
+  // ================= FIRST DIAGONAL =================
+  isReverseWalking = true;
+  // Lift
+  joints.fr_fibula = LIFT_FR_FIBULA;
+  joints.bl_fibula = LIFT_BL_FIBULA;
+  applyJointAnglesSmoothly();
+
+  // Swing backward
+  joints.fr_femur = FR_X;
+  joints.bl_femur = BL_Y;
+  applyJointAnglesSmoothly();
+
+  // Plant
+  joints.fr_fibula = STAND_FR_FIBULA;
+  joints.bl_fibula = STAND_BL_FIBULA;
+  applyJointAnglesSmoothly();
 
 
-// void walk() {
-//   joints.br_femur = 135; joints.br_fibula = 130;
-//   applyJointAngles();
-//   Serial.println("Moving Back Right leg...");
-//   while ((robot.backRight.femur.currentAngle != joints.br_femur) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
-//     robot.update();
-//   }
+  // ================= SECOND DIAGONAL =================
 
-//   joints.bl_femur = 100;  joints.bl_fibula = 0;
-//   applyJointAngles();
-//   while ((robot.backLeft.femur.currentAngle != joints.bl_femur) || (robot.backLeft.fibula.currentAngle != joints.bl_fibula)) {
-//     robot.update();
-//   }
+  // Return first pair while lifting second pair
+  joints.fr_femur = STAND_FR_FEMUR;
+  joints.bl_femur = STAND_BL_FEMUR;
 
-//   joints.fr_femur = 45;  joints.fr_fibula = 10;
-//   applyJointAngles();
-//   while ((robot.frontRight.femur.currentAngle != joints.fr_femur) || (robot.frontRight.fibula.currentAngle != joints.fr_fibula)) {
-//     robot.update();
-//   }
+  joints.fl_fibula = LIFT_FL_FIBULA;
+  joints.br_fibula = LIFT_BR_FIBULA;
+  applyJointAnglesSmoothly();
 
-//   joints.fl_femur = 130; joints.fl_fibula = 40;
-//   applyJointAngles();
-//   while ((robot.frontLeft.femur.currentAngle != joints.fl_femur) || (robot.frontLeft.fibula.currentAngle != joints.fl_fibula)) {
-//     robot.update();
-//   }
+  // Swing backward
+  joints.fl_femur = FL_X;
+  joints.br_femur = BR_Y;
+  applyJointAnglesSmoothly();
 
+  // Plant
+  joints.fl_fibula = STAND_FL_FIBULA;
+  joints.br_fibula = STAND_BR_FIBULA;
+  applyJointAnglesSmoothly();
 
-//   joints.br_femur = 135; joints.br_fibula = 180;
-//   applyJointAngles();
-//   Serial.println("Moving Back Right leg...");
-//   while ((robot.backRight.femur.currentAngle != joints.br_femur) || (robot.backRight.fibula.currentAngle != joints.br_fibula)) {
-//     robot.update();
-//   }
+  // Prepare next cycle
+  joints.fl_femur = STAND_FL_FEMUR;
+  joints.br_femur = STAND_BR_FEMUR;
+  applyJointAnglesSmoothly();
+}
 
-// }
 
 void handleSerialInput(char key) {
   bool updated = false;
@@ -438,7 +513,7 @@ void handleSerialInput(char key) {
     // Front Left Femur
     case 's':
     case 'S':
-      reverse();
+      reverseWalk();
       Serial.println("Reversing...");
       break;
     case 'a':
@@ -571,7 +646,7 @@ void handleSerialInput(char key) {
 
     case 'w':
     case 'W':
-      walk();
+      walks();
       // reverse();
       Serial.println("Walking...");
       break;
